@@ -1,1 +1,5 @@
 .env
+chroma
+data/*
+!data/.gitkeep
+__pycache__

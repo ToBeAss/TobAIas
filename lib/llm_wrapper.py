@@ -6,10 +6,10 @@ from langchain_community.callbacks import get_openai_callback
 class LLM_Wrapper:
     def __init__(self, model="azure-gpt-4o-mini", **kwargs):
         load_dotenv() # Load environment variables from .env file
-        self._llm = self._init_llm(model, **kwargs)
+        self._llm = self._init(model, **kwargs)
         self._prompt_cost = 0
 
-    def _init_llm(self, model, **kwargs):
+    def _init(self, model, **kwargs):
         if model == "azure-gpt-4o-mini":
             return AzureChatOpenAI(
                 azure_deployment="gpt-4o-mini",

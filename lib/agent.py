@@ -23,7 +23,7 @@ class Agent:
         # Step 3: Get response from the LLM
         response = self._llm.invoke(self._messages)
 
-        # Extra Step: Calculate total cost
+        # Optional Step: Calculate total cost
         self._prompt_cost = self._llm.get_prompt_cost() # + self._vector_db.get_prompt_cost()
         self._total_cost += self._prompt_cost
 
