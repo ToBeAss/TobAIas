@@ -7,9 +7,8 @@ llm = LLM_Wrapper("azure-gpt-4o-mini")
 db = VectorDB_Wrapper("chroma")
 agent = Agent("TobAIas", llm, db)
 
-print(db.embed_documents())
+db.embed_documents()
 
-'''
 while True:
     user_input = input("👤: ")
 
@@ -19,4 +18,3 @@ while True:
     # PRINT OUT RESULT
     print(f"🤖: {response.content}")
     print(f"💰: ${format(agent.get_prompt_cost(), '.6f')} / ${format(agent.get_total_cost(), '.6f')}")
-'''
