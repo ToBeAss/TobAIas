@@ -8,6 +8,7 @@ db = VectorDB_Wrapper("chroma", "azure-text-embedding-3-large")
 agent = Agent("TobAIas", llm, db)
 
 db.embed_documents("data")
+agent.add_instruction("Du skal alltid svare på norsk.")
 
 while True:
     user_input = input("👤: ")
@@ -16,5 +17,7 @@ while True:
     response = agent.invoke(user_input)
 
     # PRINT OUT RESULT
-    print(f"🤖: {response.content}")
-    print(f"💰: ${format(agent.get_prompt_cost(), '.6f')} / ${format(agent.get_total_cost(), '.6f')}")
+    print(f"🤖: {response["content"]}")
+    for source in response["sources"]:
+        print(f"🔗: {source}")
+    print(f"💰: ${format(response["cost"], '.6f')} / ${format(agent.get_total_cost(), '.6f')}")

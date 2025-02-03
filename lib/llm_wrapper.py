@@ -33,9 +33,9 @@ class LLM_Wrapper:
         for method in ["invoke", "generate", "call", "__call__", "chat"]:
             if hasattr(self._llm, method):
                 with get_openai_callback() as callback:
-                    response = getattr(self._llm, method)(prompt)
+                    result = getattr(self._llm, method)(prompt)
                     self._prompt_cost = callback.total_cost
-                    return response
+                    return result
 
         raise AttributeError(f"No valid invocation method found for {type(self._llm).__name__}.")
     

@@ -52,10 +52,10 @@ class VectorDB_Wrapper:
         
     def _init_retriever(self):
         return self._db.as_retriever(
-            search_type="mmr",
+            search_type="similarity_score_threshold",
             search_kwargs={
                 "k": 5,
-                "fetch_k": 20,
+                "score_threshold": 0.4
             },
         )
         
@@ -110,7 +110,6 @@ class VectorDB_Wrapper:
     def clear_db(self):
         if os.path.exists(self._db_dir):
             shutil.rmtree(self._db_dir)
-            print("The database has been cleared")
     
     def invoke(self, prompt):
         for method in ["invoke", "retrieve", "call", "__call__", "fetch"]:
