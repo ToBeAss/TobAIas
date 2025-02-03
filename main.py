@@ -4,10 +4,10 @@ from lib.agent import Agent
 
 # CREATE AGENT
 llm = LLM_Wrapper("azure-gpt-4o-mini")
-db = VectorDB_Wrapper("chroma")
+db = VectorDB_Wrapper("chroma", "azure-text-embedding-3-large")
 agent = Agent("TobAIas", llm, db)
 
-db.embed_documents()
+db.embed_documents("data")
 
 while True:
     user_input = input("👤: ")

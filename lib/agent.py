@@ -25,7 +25,7 @@ class Agent:
         response = self._llm.invoke(self._messages)
 
         # Optional Step: Calculate total cost
-        self._prompt_cost = self._llm.get_prompt_cost() + self._db.get_prompt_cost()
+        self._prompt_cost = self._llm.get_prompt_cost()
         self._total_cost += self._prompt_cost
 
         return response

@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from langchain_openai import AzureChatOpenAI
 from langchain_community.callbacks import get_openai_callback
+from langchain_ollama import ChatOllama
+from langchain_openai import AzureChatOpenAI
 
 class LLM_Wrapper:
     def __init__(self, model="azure-gpt-4o-mini", **kwargs):
@@ -10,7 +11,11 @@ class LLM_Wrapper:
         self._prompt_cost = 0
 
     def _init(self, model, **kwargs):
-        if model == "azure-gpt-4o-mini":
+        if model == "ollama-llama3.2":
+            return ChatOllama(
+                model="llama3.2"
+            )
+        elif model == "azure-gpt-4o-mini":
             return AzureChatOpenAI(
                 azure_deployment="gpt-4o-mini",
                 api_version="2024-08-01-preview",
@@ -22,7 +27,7 @@ class LLM_Wrapper:
                 max_retries=kwargs.get("max_retries", 2),
             )
         else:
-            raise ValueError(f"Unsupported model: {model}")
+            raise ValueError(f"Unsupported language model: {model}")
 
     def invoke(self, prompt):
         for method in ["invoke", "generate", "call", "__call__", "chat"]:
