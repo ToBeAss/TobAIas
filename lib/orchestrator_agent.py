@@ -33,8 +33,8 @@ class Orchestrator_Agent(Agent):
                     call_list.append("aloe_vera")
 
         # Step 3: Call agents
+        results = []
         if len(call_list):
-            results = []
             for call in call_list:
                 print(f"🤖: Let me ask {call} about this issue...")
                 for agent in self._children:
@@ -47,5 +47,9 @@ class Orchestrator_Agent(Agent):
                     print(f"🔗: {source}")
 
         #Step 4: Invoke the original agent with added contexts
-        prompt = f"Context:\n{results if results else ""}\n\nUser Query:\n{user_input}\n\nAnswer the question based on the context. If no context is given, answer the question based on your own training data or the context of the conversation history."
+        if len(results):
+            context = result
+        else:
+            context = retrieved_chunks
+        prompt = f"Context:\n{context}\n\nUser Query:\n{user_input}\n\nAnswer the question based on the context. If no context is given, answer the question based on your own training data or the context of the conversation history."
         return self._llm.invoke(prompt).content
