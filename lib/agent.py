@@ -32,9 +32,9 @@ class Agent:
         retrieved_chunks = self._db.invoke(enhanced_query)
         contexts = []
         sources = []
-        for chunk in retrieved_chunks:
+        for chunk, score in retrieved_chunks:
             contexts.append(chunk.page_content)
-            sources.append(chunk.id)
+            sources.append((chunk.id, format(score, ".2f")))
 
         # Step 2: Formulate a structured prompt using retrieved context and add it to the message history
         context = f"{retrieved_chunks}" if retrieved_chunks else "I couldn't find any relevant documents. I'll answer based on my general knowledge."
