@@ -11,13 +11,15 @@ db.embed_documents("data")
 agent.add_instruction("Du skal alltid svare på norsk.")
 
 while True:
+    print()
     user_input = input("👤: ")
 
     # INVOKE AGENT WITH USER INPUT
     response = agent.invoke(user_input)
 
     # PRINT OUT RESULT
+    print(f"🔍: {response["query"]}")
     print(f"🤖: {response["content"]}")
     for source in response["sources"]:
         print(f"🔗: {source}")
-    print(f"💰: ${format(response["cost"], '.6f')} / ${format(agent.get_total_cost(), '.6f')}")
+    print(f"💰: ${format(response["cost"], '.6f')}")
