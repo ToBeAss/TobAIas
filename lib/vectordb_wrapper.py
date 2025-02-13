@@ -8,9 +8,10 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_openai import AzureOpenAIEmbeddings
 
 class VectorDB_Wrapper:
-    def __init__(self, db_dir: str, db="chroma", embedding="azure-text-embedding-3-large"):
+    def __init__(self, db_dir: str, db="chroma", embedding="azure-text-embedding-3-large", score_threshold=0.4):
         load_dotenv() # Load environment variables from .env file
         self._db_dir = db_dir
+        self._score_threshold = score_threshold
         self._embedding = self._init_embedding(embedding)
         self._db = self._init_db(db)
         self._retriever = self._init_retriever()
@@ -56,21 +57,21 @@ class VectorDB_Wrapper:
             search_type="similarity_score_threshold",
             search_kwargs={
                 "k": 5,
-                "score_threshold": 0.4
+                "score_threshold": self._score_threshold
             },
         )
     
     def _read_files(self, path: str):
         documents = []
+        for root, _, files in os.walk(path): # Recursively walk through directories
+            for filename in files:
+                file_path = os.path.join(root, filename)
 
-        for filename in os.listdir(path):
-            file_path = os.path.join(path, filename)
-
-            if os.path.isfile(file_path): # Ensure it is a file
-                with open(file_path, "r", encoding="utf-8") as file:
-                    content = file.read()
-                    doc = Document(page_content=content, metadata={"source": file_path, "page": 0})
-                    documents.append(doc)
+                if os.path.isfile(file_path): # Ensure it is a file
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                        doc = Document(page_content=content, metadata={"source": file_path, "page": 0})
+                        documents.append(doc)
         return documents
         
     def _load_documents(self, path: str):
