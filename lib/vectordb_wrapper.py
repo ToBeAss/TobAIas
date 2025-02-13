@@ -68,10 +68,15 @@ class VectorDB_Wrapper:
                 file_path = os.path.join(root, filename)
 
                 if os.path.isfile(file_path): # Ensure it is a file
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                        doc = Document(page_content=content, metadata={"source": file_path, "page": 0})
-                        documents.append(doc)
+                    try:
+                        print(f"Reading: {file_path}")  # Debug print
+                        with open(file_path, "r", encoding="utf-8") as file:
+                            content = file.read()
+                            doc = Document(page_content=content, metadata={"source": file_path, "page": 0})
+                            documents.append(doc)
+                    except UnicodeDecodeError as e:
+                        print(f"Unicode error in file: {file_path}\nError: {e}")
+                        return  # Stop execution so we can inspect the problematic file
         return documents
         
     def _load_documents(self, path: str):

@@ -5,3 +5,4 @@ data/*
 __pycache__
 aloe_vera_data/*
 aloe_chroma/*
+.DS_Store
