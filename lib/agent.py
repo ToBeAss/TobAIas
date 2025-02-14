@@ -49,12 +49,11 @@ class Agent:
         # Step 2: Formulate a structured prompt using retrieved context and add it to the message history
         context = f"{retrieved_chunks}" if retrieved_chunks else "I couldn't find any relevant documents. I'll answer based on my general knowledge."
         prompt = f"Context:\n{context}\n\nUser Query:\n{user_input}\n\nAnswer the question based on the context. If no context is given, answer the question based on your own training data or the context of the conversation history."
-        self._add_message(prompt, "human")
-        # see if I can get away with only storing the user input
 
         # Step 3: Get response from the LLM
-        result = self._llm.invoke(self._instructions + self._messages)
+        result = self._llm.invoke(self._instructions + self._messages + [prompt])
         response = result.content
+        self._add_message(user_input, "human")
         self._add_message(response, "ai")
 
         # Optional Step: Calculate total cost
@@ -133,11 +132,11 @@ class Orchestrator_Agent(Agent):
         # Step 4: Formulate a structured prompt using retrieved context and add it to the message history
         context = f"{results}" if results else retrieved_chunks
         prompt = f"Context:\n{context}\n\nUser Query:\n{user_input}\n\nAnswer the question based on the context. If no context is given, answer the question based on your own training data or the context of the conversation history."
-        self._add_message(prompt, "human")
         
         # Step 5: Get response from the LLM
-        result = self._llm.invoke(self._instructions + self._messages)
+        result = self._llm.invoke(self._instructions + self._messages + [prompt])
         response = result.content
+        self._add_message(user_input, "human")
         self._add_message(response, "ai")
 
         # Optional Step: Calculate total cost
