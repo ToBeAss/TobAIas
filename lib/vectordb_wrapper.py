@@ -8,13 +8,15 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_openai import AzureOpenAIEmbeddings
 
 class VectorDB_Wrapper:
-    def __init__(self, db_dir: str, db="chroma", embedding="azure-text-embedding-3-large", score_threshold=0.4):
+    instances = 0 # Class variable to track instances
+
+    def __init__(self, db="chroma", embedding="azure-text-embedding-3-large", search_type="similarity_score_threshold", k=5, fetch_k=20, score_threshold=0.4):
         load_dotenv() # Load environment variables from .env file
-        self._db_dir = db_dir
-        self._score_threshold = score_threshold
+        self._dir = f"{db}_{VectorDB_Wrapper.instances}"
+        VectorDB_Wrapper.instances += 1 # Increment on each instantiation
         self._embedding = self._init_embedding(embedding)
         self._db = self._init_db(db)
-        self._retriever = self._init_retriever()
+        self._retriever = self._init_retriever(search_type, k, fetch_k, score_threshold)
         self._document_loader = self._init_document_loader()
         self._text_splitter = self._init_text_splitter()
 
@@ -46,20 +48,19 @@ class VectorDB_Wrapper:
     def _init_db(self, db):
         if db == "chroma":
             return Chroma(
-                persist_directory=self._db_dir,
+                persist_directory=self._dir,
                 embedding_function=self._embedding,
             )
         else:
             raise ValueError(f"Unsupported database: {db}")
         
-    def _init_retriever(self):
-        return self._db.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={
-                "k": 5,
-                "score_threshold": self._score_threshold
-            },
-        )
+    def _init_retriever(self, search_type, k, fetch_k, score_threshold):
+        return {
+            "search_type": search_type,
+            "k": k,
+            "fetch_k": fetch_k,
+            "score_threshold": score_threshold,
+        }
     
     def _read_files(self, path: str):
         documents = []
@@ -69,7 +70,6 @@ class VectorDB_Wrapper:
 
                 if os.path.isfile(file_path): # Ensure it is a file
                     try:
-                        print(f"Reading: {file_path}")  # Debug print
                         with open(file_path, "r", encoding="utf-8") as file:
                             content = file.read()
                             doc = Document(page_content=content, metadata={"source": file_path, "page": 0})
@@ -131,17 +131,20 @@ class VectorDB_Wrapper:
         return self.embed_data(documents)
     
     def clear_db(self):
-        if os.path.exists(self._db_dir):
-            shutil.rmtree(self._db_dir)
+        if os.path.exists(self._dir):
+            shutil.rmtree(self._dir)
     
     def invoke(self, prompt):
-        results = self._db.similarity_search_with_relevance_scores(prompt, k=5, score_threshold=0.1)
-        return results
-        '''
-        for method in ["invoke", "retrieve", "call", "__call__", "fetch"]:
-            if hasattr(self._retriever, method):
-                results = getattr(self._retriever, method)(prompt)
-                return results
-
-        raise AttributeError(f"No valid invocation method found for {type(self._retriever).__name__}.")
-        '''
+        if self._retriever["search_type"] == "similarity_score_threshold":
+            return self._db.similarity_search_with_relevance_scores(prompt, self._retriever["k"], score_threshold=self._retriever["score_threshold"])
+        elif self._retriever["search_type"] == "mmr":
+            retriever = self._db.as_retriever(
+                search_type="mmr",
+                search_kwargs={
+                    "k": self._retriever["k"],
+                    "fetch_k": self._retriever["fetch_k"],
+                },
+            )
+            return retriever.invoke(prompt)
+        else:
+            raise AttributeError(f"No valid invocation method found for {type(self._retriever).__name__}.")

@@ -13,6 +13,7 @@ class Agent:
         self._db = vector_db
         self._prompt_cost = 0
         self._total_cost = 0
+        self._db._db._persist_directory += f"_{self.name}"
 
     def _add_message(self, message: str, role: str):
         data = (role, message)
@@ -24,6 +25,9 @@ class Agent:
         data = ("system", instruction)
         self._instructions.append(data)
 
+    def add_data(self, path: str):
+        return self._db.embed_documents(path)
+
     def invoke(self, user_input):
         # Step 0: Rephrase user input for better search
         prompt = f"Conversation context:\n{self._instructions}\n{self._messages}\n\nUser Query:\n{user_input}\n\nRephrase the question to better be used in a RAG retrieval search. Include important keywords that could be relevant to the user's question for the retrieval to work better."
@@ -33,9 +37,14 @@ class Agent:
         retrieved_chunks = self._db.invoke(enhanced_query)
         contexts = []
         sources = []
-        for chunk, score in retrieved_chunks:
-            contexts.append(chunk.page_content)
-            sources.append((chunk.id, format(score, ".2f")))
+        if "score" in retrieved_chunks:
+            for chunk, score in retrieved_chunks:
+                contexts.append(chunk.page_content)
+                sources.append((chunk.id, format(score, ".2f")))
+        else:
+            for chunk in retrieved_chunks:
+                contexts.append(chunk.page_content)
+                sources.append(chunk.id)
 
         # Step 2: Formulate a structured prompt using retrieved context and add it to the message history
         context = f"{retrieved_chunks}" if retrieved_chunks else "I couldn't find any relevant documents. I'll answer based on my general knowledge."
@@ -116,13 +125,11 @@ class Orchestrator_Agent(Agent):
                 print()
                 result = self._invoke_child(call, user_input)
                 results.append((call, result))
-                
-            print(f"📊children: {results}")
+            #print(f"📊children: {results}")
             for result in results:
                 for source in result[1]["sources"]:
                     children_sources.append(source)
                     
-
         # Step 4: Formulate a structured prompt using retrieved context and add it to the message history
         context = f"{results}" if results else retrieved_chunks
         prompt = f"Context:\n{context}\n\nUser Query:\n{user_input}\n\nAnswer the question based on the context. If no context is given, answer the question based on your own training data or the context of the conversation history."
@@ -132,6 +139,13 @@ class Orchestrator_Agent(Agent):
         result = self._llm.invoke(self._instructions + self._messages)
         response = result.content
         self._add_message(response, "ai")
+
+        # Optional Step: Calculate total cost
+        children_cost = 0
+        for child in self._children.values():
+            children_cost += child._prompt_cost
+        self._prompt_cost = self._llm.get_prompt_cost() + children_cost
+        self._total_cost += self._prompt_cost
 
         # Constuct return dictionary
         return {
