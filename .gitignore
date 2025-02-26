@@ -6,3 +6,5 @@ aloe_vera_data/*
 aloe_chroma/*
 .DS_Store
 chroma*
+venv
+.venv
