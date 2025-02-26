@@ -37,12 +37,12 @@ class Agent:
         retrieved_chunks = self._db.invoke(enhanced_query)
         contexts = []
         sources = []
-        if "score" in retrieved_chunks:
-            for chunk, score in retrieved_chunks:
-                contexts.append(chunk.page_content)
-                sources.append((chunk.id, format(score, ".2f")))
-        else:
-            for chunk in retrieved_chunks:
+        for chunk in retrieved_chunks:
+            if isinstance(chunk, tuple):
+                document, score = chunk
+                contexts.append(document.page_content)
+                sources.append((document.id, format(score, ".2f")))
+            else:
                 contexts.append(chunk.page_content)
                 sources.append(chunk.id)
 
